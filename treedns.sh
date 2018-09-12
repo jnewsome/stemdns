@@ -1,3 +1,9 @@
+#!/bin/bash
+# ------------------------------------------------------------------
+# [Jason N.] TreeDNS
+#          Basic DNS tool pulling results from seperate sources
+# ------------------------------------------------------------------
+
 clear 
 echo -n "Enter Domain: " ;
 read domain; 
