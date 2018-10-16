@@ -1,3 +1,10 @@
+#!/bin/bash
+# ------------------------------------------------------------------
+# [Jason N.] PChecker
+#          Basic DNS tool detailing differing reports from multiple 
+#	   sources, including the assumed HOST. 
+# ------------------------------------------------------------------
+
 echo -n "Enter Domain: " ;
 read domain; 
 echo -n "Enter HOST: " ; 
