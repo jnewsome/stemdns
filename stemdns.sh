@@ -4,85 +4,107 @@
 #          Basic DNS tool pulling results from seperate sources
 # ------------------------------------------------------------------
 
-clear
-echo -n "Enter Domain: " ;
-read domain;
+#GLOBAL VARIABLES
+#Line Break
 break=$(printf "\x2D%.0s" {1..27}) ;
-pns=$(dig -t SOA +trace $domain|
-	grep Received|
-	sed -n 3p| 
-	cut -d "(" -f2 | cut -d ")" -f1  
+#Parent DNS
+pns=$(dig -t SOA +trace $1|
+        grep Received|
+        sed -n 3p|
+        cut -d "(" -f2 | cut -d ")" -f1
 2>/dev/null)
-
+#COLORS
+#Red
+_R=$(tput setaf 1)
+#White
+_W=$(tput sgr0)
+#Yellow
+_Y=$(tput setaf 3)
+#Green
+_G=$(tput setaf 2)
+#Magenta
+_P=$(tput setaf 5)
+#Cyan
+_C=$(tput setaf 6)
+# -----------------------------------
 clear
-
 #parent name servers
+echo "$_Y<code>$_W"
+echo -e "$_G=-=-=-=-=-=-=-= --Parent Name Servers-- =-=-=-=-=-=-=-=$_R\n"
+echo -e "The parent nameserver $pns. Reports $1 nameservers as: $_P"
+        echo "$_C$break$_P"
+        dig @$pns -t NS $i |sed -n '14,21p'
+echo "$_Y</code>$_W"
+echo "$_Y<code>$_W"
+echo -e "$_G=-=-=-=-=-=-=-= --Local Resolver Return-- =-=-=-=-=-=-=-=$_R";
+        echo -e "$_R\nA/AAAA record for $1: $_P";
+        echo "$_C$break$_P"
+                echo "$1 IN A $(dig -t A $1 +short)";
+                echo "AAAA for $1 $(dig -t AAAA $1 +short)" ;
+        echo "$_C-----$_P"
 
-echo -e "============== --Parent Name Servers-- ============== " 
-
-echo "The parent nameserver $pns. Reports $domain nameservers as:"
-	echo "$break" 
-	dig @$pns -t NS $domain |sed -n '14,21p'
-
-echo -e "\n\n============== --Local Resolver Return-- ==============";
-        echo "A record for $domain:";
-        echo "$break";
-                echo "$domain IN A $(dig -t A $domain +short)";
-        echo "-----"
-
-                for i in $(dig -t A $domain +short);
-
-                        do dig -x $i +short && host $i ;
-
-                done
-
-        echo -e "\nNS for $domain:";
-        echo "$break";
-                dig -t NS $domain +short;
-        echo -e "\nSOA for $domain (Serial: $(dig -t SOA $domain +short|awk '{print$3}')):" ;
-        echo "$break" ;
-                dig -t SOA $domain +short ;
-
-#DNS reported from Google Resolvers 
-
-echo -e "\n============== --Google DNS Return-- ==============" ;
-        echo "A record for $domain:";
-        echo "$break" ;
-                echo "$domain IN A $(dig @8.8.8.8 -t A $domain +short)"
-        echo "-----"
-
-                for i in $(dig @8.8.8.8 -t A $domain +short);
+                for i in $(dig -t A $1 +short);
 
                         do dig -x $i +short && host $i ;
 
                 done
 
-        echo -e "\nNS for $domain:";
-        echo "$break";
-                dig @8.8.8.8 -t NS $domain +short
-        echo -e "\nSOA for $domain (Serial: $(dig @8.8.8.8 -t SOA $domain +short|awk '{print$3}')):";
-        echo "$break" ;
-                dig @8.8.8.8 -t SOA $domain +short;
+        echo -e "$_R\nNS for $1:$_P";
+        echo "$_C$break$_P"
+                dig -t NS $1 +short;
+        echo -e "$_R\nSOA for $1 (Serial: $(dig -t SOA $1 +short|awk '{print$3}')):" ;
+        echo "$_C$break$_P"
+                dig -t SOA $1 +short ;
+echo "$_Y</code>$_W"
 
-#Mail DNS reporting 
+#DNS reported from Google Resolvers
 
-echo -e "\n\n=================================== --Mail DNS Report for $domain (Google)-- ===================================\n" ;
+echo "$_Y<code>$_W"
+echo -e "$_G=-=-=-=-=-=-=-= --Google DNS Return-- =-=-=-=-=-=-=-=$_G" ;
+        echo -e "$_R\nA/AAAA record for $1: $_P";
+        echo "$_C$break$_P"
+                echo "$1 IN A $(dig @8.8.8.8 -t A $1 +short)"
+                echo "AAAA for $1 $(dig -t AAAA $1 +short)" ;
+        echo "$_C-----$_P"
 
-        echo -e "---------------------------- DKIM ---------------------------- \n";
-                dig @8.8.8.8 -t txt default._domainkey.$domain +short ;
+                for i in $(dig @8.8.8.8 -t A $1 +short);
 
-        echo -e "------------------------ SPF (TXT Values)-------------------- \n" ;
-                dig @8.8.8.8 -t txt $domain +short;
+                        do dig -x $i +short && host $i ;
 
-        echo -e "---------------------------- MX Records --------------------- \n" ;
-                dig @8.8.8.8 -t MX $domain +short
-                echo "-----" 
+                done
 
-                for i in $(dig @8.8.8.8 -t MX +short $domain| awk '{print$2}') ;
+        echo -e "$_R\nNS for $1:$_P";
+        echo "$_C$break$_P"
+                dig @8.8.8.8 -t NS $1 +short
+        echo -e "$_R\nSOA for $1 (Serial: $(dig @8.8.8.8 -t SOA $1 +short|awk '{print$3}')):";
+        echo "$_C$break$_P"
+                dig @8.8.8.8 -t SOA $1 +short;
+echo "$_Y</code>$_W"
+
+#Mail DNS reporting
+
+echo "$_Y<code>$_W"
+echo -e "$_G=-=-=-=-=-=-=-= ---Mail DNS Report for $1 (Google)--- =-=-=-=-=-=-=-=$_R\n" ;
+
+        echo -e "$_C----------------------------$_R DKIM $_C---------------------------- $_P\n";
+                dig @8.8.8.8 -t TXT default._domainkey.$1 +short ;
+
+        echo -e "$_C-----------------------$_R Default DMARC $_C------------------------$_P\n";
+                dig @8.8.8.8 -t TXT _dmarc.$1 +short
+
+        echo -e "$_C------------------------$_R SPF (TXT Values)$_C--------------------$_P\n" ;
+                dig @8.8.8.8 -t TXT $1 +short;
+
+        echo -e "$_C----------------------------$_R MX Records $_C---------------------$_P\n" ;
+                dig @8.8.8.8 -t MX $1 +short
+                echo "-----"
+
+                for i in $(dig @8.8.8.8 -t MX +short $1| awk '{print$2}') ;
 
                         do host $i ;
 
                 done
-
-echo -e "\n-JN"
+echo "$_G=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-="
+echo "$_Y</code>$_W"
+echo -e "$(tput setaf 4)\n-JN$(tput sgr0)"
 
